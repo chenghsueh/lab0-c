@@ -47,7 +47,7 @@ bool q_insert_head(struct list_head *head, char *s)
     }
 
     new_element->value = strdup(s);
-    if (new_element->value) {
+    if (!new_element->value) {
         free(new_element);
         return false;
     }
@@ -151,7 +151,7 @@ void q_swap(struct list_head *head)
 {
     // https://leetcode.com/problems/swap-nodes-in-pairs/
     if (!head) {
-        return NULL;
+        return;
     }
 
     struct list_head *node;
@@ -167,7 +167,7 @@ void q_swap(struct list_head *head)
 void q_reverse(struct list_head *head)
 {
     if (!head) {
-        return NULL;
+        return;
     }
 
     struct list_head *entry, *safe;
