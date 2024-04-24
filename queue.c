@@ -71,14 +71,11 @@ element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
 
     element_t *re_element = list_first_entry(head, element_t, list);
 
-    list_del(&re_element->list);
     if (sp) {
-        size_t len = bufsize - 1 > strlen(re_element->value)
-                         ? bufsize - 1
-                         : strlen(re_element->value);
-        strncpy(sp, re_element->value, len);
-        *(sp + len) = '0';
+        strncpy(sp, re_element->value, bufsize - 1);
+        *(sp + bufsize - 1) = '\0';
     }
+    list_del_init(&re_element->list);
 
     return re_element;
 }
@@ -320,7 +317,7 @@ int q_merge(struct list_head *head, bool descend)
                    *cur = NULL;
     int size = t->size;
 
-    if (!list_is_singular(head)) {
+    if (list_is_singular(head)) {
         return size;
     }
 
