@@ -1156,6 +1156,50 @@ static bool do_next(int argc, char *argv[])
     return q_show(0);
 }
 
+void q_shuffle(struct list_head *head)
+{
+    if (!head || list_empty(head) || list_is_singular(head)) {
+        return;
+    }
+    int size = q_size(head);
+
+    // shuffle
+    for (int i = 0; i < size;) {
+        struct list_head *start = head->next;
+        int rand_idx = rand() % size;
+        for (int j = 0; j < rand_idx; j++) {
+            start = start->next;
+        }
+        list_move_tail(start, head);
+        size--;
+    }
+    return;
+}
+
+static bool do_shuffle(int argc, char *argv[])
+{
+    if (argc != 1) {
+        report(1, "%s takes no arguments", argv[0]);
+        return false;
+    }
+
+    if (!current || !current->q) {
+        report(3, "Warning: Try to access null queue");
+        return false;
+    }
+    error_check();
+
+    set_noallocate_mode(true);
+    if (exception_setup(true))
+        q_shuffle(current->q);
+    exception_cancel();
+
+    set_noallocate_mode(false);
+
+    q_show(3);
+    return !error_check();
+}
+
 static void console_init()
 {
     ADD_COMMAND(new, "Create new queue", "");
@@ -1199,6 +1243,8 @@ static void console_init()
     ADD_COMMAND(list_sort,
                 "Sort queue in ascending/descending order by the sorting "
                 "algorithm in linux kernel",
+                "");
+    ADD_COMMAND(shuffle, "Suffle the queue by Fisher-Yates shuffle algorithm",
                 "");
     add_param("length", &string_length, "Maximum length of displayed string",
               NULL);
