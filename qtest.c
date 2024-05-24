@@ -22,6 +22,7 @@
 #include "dudect/fixture.h"
 #include "list.h"
 #include "random.h"
+#include "xorshift.h"
 
 /* Shannon entropy */
 extern double shannon_entropy(const uint8_t *input_data);
@@ -78,6 +79,10 @@ static int descend = 0;
 
 #define MIN_RANDSTR_LEN 5
 #define MAX_RANDSTR_LEN 10
+#define XORSHIFT_SEED 1234
+
+struct xorshift64_state seed = {.a = XORSHIFT_SEED};
+bool is_PRNG = false;
 static const char charset[] = "abcdefghijklmnopqrstuvwxyz";
 /* For queue_insert and queue_remove */
 typedef enum {
@@ -174,7 +179,11 @@ static void fill_rand_string(char *buf, size_t buf_size)
         len = rand() % buf_size;
 
     uint64_t randstr_buf_64[MAX_RANDSTR_LEN] = {0};
-    randombytes((uint8_t *) randstr_buf_64, len * sizeof(uint64_t));
+    if (is_PRNG)
+        xor_random_bytes((uint8_t *) randstr_buf_64, len * sizeof(uint64_t),
+                         &seed);
+    else
+        randombytes((uint8_t *) randstr_buf_64, len * sizeof(uint64_t));
     for (size_t n = 0; n < len; n++)
         buf[n] = charset[randstr_buf_64[n] % (sizeof(charset) - 1)];
 
@@ -220,6 +229,13 @@ static bool queue_insert(position_t pos, int argc, char *argv[])
     if (!strcmp(inserts, "RAND")) {
         need_rand = true;
         inserts = randstr_buf;
+        is_PRNG = false;
+    }
+
+    if (!strcmp(inserts, "PRAND")) {
+        need_rand = true;
+        inserts = randstr_buf;
+        is_PRNG = true;
     }
 
     if (!current || !current->q)
